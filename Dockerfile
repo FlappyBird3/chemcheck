@@ -8,5 +8,5 @@ WORKDIR /home/user/app
 COPY --chown=user . .
 RUN pip install --no-cache-dir ".[api]"
 
-EXPOSE 7860
-CMD ["python", "-m", "uvicorn", "chemcheck.api:app", "--host", "0.0.0.0", "--port", "7860"]
+EXPOSE 8000
+CMD ["sh", "-c", "python -m uvicorn chemcheck.api:app --host 0.0.0.0 --port ${PORT:-8000}"]
