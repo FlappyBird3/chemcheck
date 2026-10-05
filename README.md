@@ -1,6 +1,7 @@
 # ChemCheck
 ---
 title: ChemCheck API
+emoji: 🧪
 colorFrom: blue
 colorTo: green
 sdk: docker
