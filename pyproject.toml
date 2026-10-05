@@ -11,5 +11,5 @@ requires-python = ">=3.10"
 dependencies = ["pymatgen"]
 
 [project.optional-dependencies]
-dev = ["pytest", "httpx"]
+dev = ["pytest", "httpx2"]
 api = ["fastapi", "uvicorn"]
