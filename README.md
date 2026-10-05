@@ -1,4 +1,13 @@
 # ChemCheck
+---
+title: ChemCheck API
+colorFrom: blue
+colorTo: green
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 
 ![tests](https://github.com/FlappyBird3/chemcheck/actions/workflows/tests.yml/badge.svg)
 
