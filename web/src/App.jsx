@@ -1,0 +1,136 @@
+// ChemCheck demo: pick one element from each group, then see how the original and DPO-trained models
+// answered, with ChemCheck verifying each answer on the server.
+import { useEffect, useState } from "react";
+import PeriodicTable from "./PeriodicTable";
+import { askModels, wakeServer } from "./api";
+import "./App.css";
+
+const GROUPS = {
+  cation: { label: "Main-group metal", color: "#22d3ee", symbols: ["Li", "Na", "K", "Mg", "Ca"] },
+  metal: { label: "Transition metal", color: "#a78bfa",
+           symbols: ["Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn", "Nb", "Mo"] },
+  anion: { label: "Non-metal", color: "#34d399", symbols: ["O", "S", "F", "N"] },
+};
+const GROUP_OF = Object.fromEntries(
+  Object.entries(GROUPS).flatMap(([g, { symbols }]) => symbols.map((s) => [s, g])));
+const COLORS = Object.fromEntries(Object.entries(GROUPS).map(([g, { color }]) => [g, color]));
+const EMPTY = { cation: null, metal: null, anion: null };
+
+const VERDICTS = {
+  correct_supported: { icon: "✓", text: "Correct · reasoning supports the formula" },
+  correct_unsupported: { icon: "!", text: "Correct formula · reasoning does not support it" },
+  incorrect: { icon: "✕", text: "Incorrect" },
+};
+
+function AnswerPanel({ title, data }) {
+  const v = VERDICTS[data.verdict];
+  return (
+    <div className="panel">
+      <h3>{title}</h3>
+      <pre>{data.answer.trim()}</pre>
+      <p className={`verdict ${data.verdict}`}>{v.icon} {v.text}</p>
+      <ul className="explanation">
+        {data.check.explanation.map((s, i) => <li key={i}>{s}</li>)}
+      </ul>
+    </div>
+  );
+}
+
+export default function App() {
+  const [picked, setPicked] = useState(EMPTY);
+  const [result, setResult] = useState(null);
+  const [sample, setSample] = useState(0);
+  const [status, setStatus] = useState("idle");
+  const [error, setError] = useState("");
+
+  useEffect(() => { wakeServer(); }, []);
+
+  const chosen = Object.values(picked).filter(Boolean);
+  const ready = chosen.length === 3;
+
+  function pick(sym) {
+    const g = GROUP_OF[sym];
+    setPicked((p) => ({ ...p, [g]: p[g] === sym ? null : sym }));
+    setResult(null);
+  }
+
+  function reset() {
+    setPicked(EMPTY);
+    setResult(null);
+    setSample(0);
+    setStatus("idle");
+    setError("");
+  }
+
+  async function run(nextSample) {
+    setStatus("loading");
+    setError("");
+    try {
+      setResult(await askModels(chosen, nextSample));
+      setSample(nextSample);
+      setStatus("idle");
+    } catch (e) {
+      setError(e.message);
+      setStatus("error");
+    }
+  }
+
+  return (
+    <main>
+      <header>
+        <p className="kicker">LLM chemistry · verified by ChemCheck</p>
+        <h1>Chem<span className="check">Check</span></h1>
+        <p className="tagline">
+          Choose one element from each group. Two language models, the original and a DPO-trained version, each
+          propose a compound, and ChemCheck verifies whether it is charge-balanced and whether the model's own
+          reasoning supports it.
+        </p>
+      </header>
+
+      <div className="slots">
+        {Object.entries(GROUPS).map(([g, { label, color }]) => (
+          <span key={g} className="slot" style={{ "--c": color }}>
+            {label}<strong>{picked[g] || "—"}</strong>
+          </span>
+        ))}
+      </div>
+
+      <PeriodicTable groupOf={GROUP_OF} colors={COLORS} chosen={chosen} onPick={pick} />
+
+      <div className="actions">
+        <button type="button" className="primary" disabled={!ready || status === "loading"}
+                onClick={() => run(0)}>
+          {status === "loading" ? "Running…" : "Run"}
+        </button>
+        <button type="button" className="secondary" onClick={reset}>Reset</button>
+      </div>
+      {status === "loading" && <p className="note">If the server was asleep, this can take up to a minute.</p>}
+      {status === "error" && <p className="error">Could not reach the server: {error}</p>}
+
+      {result && (
+        <section className="results">
+          <p className="split">
+            <span className={`tag ${result.split}`}>{result.split === "held-out" ? "HELD-OUT" : "TRAINING"}</span>
+            {result.split === "held-out"
+              ? "The DPO model was never trained on these elements."
+              : "The DPO model was trained on these elements."}
+            <span className="count">Answer {sample + 1} of 8</span>
+          </p>
+          <div className="panels">
+            <AnswerPanel title="Original model · Qwen2.5-1.5B-Instruct" data={result.original} />
+            <AnswerPanel title="DPO-trained model" data={result.dpo} />
+          </div>
+          <button type="button" className="secondary" disabled={status === "loading"}
+                  onClick={() => run((sample + 1) % 8)}>
+            Show another answer
+          </button>
+        </section>
+      )}
+
+      <footer>
+        The answers shown were generated by each model during the experiment. ChemCheck checks them live on
+        the server.
+      </footer>
+    </main>
+  );
+}
