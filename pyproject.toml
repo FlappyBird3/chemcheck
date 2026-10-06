@@ -13,3 +13,6 @@ dependencies = ["pymatgen"]
 [project.optional-dependencies]
 dev = ["pytest", "httpx2"]
 api = ["fastapi", "uvicorn"]
+
+[tool.setuptools.package-data]
+chemcheck = ["data/*.json"]
