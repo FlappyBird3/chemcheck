@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 from .answers import all_answers, combination_key
 from .checker import CheckResult, check_answer
 
-app = FastAPI(title="ChemCheck", version="0.2.0",
+app = FastAPI(title="ValenceLLM · ChemCheck API", version="0.2.0",
               description="Check AI-generated chemistry answers for charge balance and consistent reasoning.")
 
 # Allow web pages on other addresses (the React site) to call this API. Tightened when deployed.

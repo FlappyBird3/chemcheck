@@ -1,8 +1,10 @@
 ![tests](https://github.com/FlappyBird3/chemcheck/actions/workflows/tests.yml/badge.svg)
 
-# ChemCheck
+# ValenceLLM: ChemCheck verifier and web app
 
-Check AI-generated chemistry answers: is the formula valid, is it charge-balanced,
-and does the stated reasoning actually support it?
+Part of **ValenceLLM**, a project on whether preference training improves a language model's chemistry
+reasoning or only its answers. This repository contains **ChemCheck**, a verifier that checks whether a
+formula is charge-balanced and whether the model's stated reasoning supports it, along with the API and
+the interactive website.
 
-**Live API:** https://chemcheck-api-crwd.onrender.com/docs
+**Training and analysis:** https://github.com/FlappyBird3/dpo-matsci
